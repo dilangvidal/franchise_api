@@ -35,4 +35,9 @@ public class FranchiseUseCaseImpl implements FranchiseUseCase {
                     return franchiseRepository.save(franchise);
                 });
     }
+    @Override
+    public Flux<Franchise> getAllFranchises() {
+        log.info("Obtener todas las franquicias");
+        return franchiseRepository.findAll();
+    }
 }

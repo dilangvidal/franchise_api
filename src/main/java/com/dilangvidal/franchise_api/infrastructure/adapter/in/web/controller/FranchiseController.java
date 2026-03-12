@@ -47,4 +47,11 @@ public class FranchiseController {
                 return franchiseUseCase.createFranchise(request.name())
                                 .map(webMapper::toResponse);
         }
+        @Operation(summary = "Obtener todas las franquicias")
+        @ApiResponse(responseCode = "200", description = "Lista de todas las franquicias")
+        @GetMapping
+        public Flux<FranchiseResponse> getAllFranchises() {
+                return franchiseUseCase.getAllFranchises()
+                                .map(webMapper::toResponse);
+        }
 }
