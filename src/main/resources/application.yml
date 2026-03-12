@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: franchise-api
+  data:
+    mongodb:
+      auto-index-creation: true
+  mongodb:
+    host: localhost
+    port: 27017
+    database: franchise_db
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
