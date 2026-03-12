@@ -396,4 +396,86 @@ class FranchiseControllerTest {
             assertTrue(duration < 500, "La respuesta tardo demasiado");
         }
     }
+
+    // POST /{franchiseId}/branches/{branchId}/products
+    @Nested
+    @DisplayName("POST /{franchiseId}/branches/{branchId}/products")
+    class AddProduct {
+
+        @Test
+        @DisplayName("Debe agregar producto exitosamente con 201")
+        void shouldCreateProduct() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            Franchise updated = sampleFranchise();
+
+            when(franchiseUseCase.addProduct("franc-1", "branch-1", "Alitas BBQ", 50))
+                    .thenReturn(Mono.just(updated));
+
+            webTestClient.post()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new ProductRequest("Alitas BBQ", 50))
+                    .exchange()
+                    .expectStatus().isCreated()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON);
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).addProduct("franc-1", "branch-1", "Alitas BBQ", 50);
+        }
+
+        @Test
+        @DisplayName("Debe retornar 404 cuando la sucursal no existe")
+        void shouldReturn404WhenBranchNotFound() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            when(franchiseUseCase.addProduct(eq("franc-1"), eq("no-existe"),
+                    anyString(), anyInt()))
+                    .thenReturn(Mono.error(new BranchNotFoundException("no-existe")));
+
+            webTestClient.post()
+                    .uri(BASE_URL + "/franc-1/branches/no-existe/products")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new ProductRequest("Producto", 10))
+                    .exchange()
+                    .expectStatus().isNotFound();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+        }
+
+        @Test
+        @DisplayName("Debe rechazar con 400 cuando el stock es negativo")
+        void shouldFailWhenStockNegative() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            webTestClient.post()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new ProductRequest("Producto", -1))
+                    .exchange()
+                    .expectStatus().isBadRequest();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase, never()).addProduct(any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Debe rechazar con 400 cuando el nombre del producto esta vacio")
+        void shouldFailWhenNameBlank() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            webTestClient.post()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new ProductRequest("", 10))
+                    .exchange()
+                    .expectStatus().isBadRequest();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+        }
+    }
 }

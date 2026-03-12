@@ -294,4 +294,59 @@ class FranchiseUseCaseImplTest {
                     .verify();
         }
         }
+        @Nested
+        @DisplayName("addProduct")
+        class AddProduct {
+
+                @Test
+                @DisplayName("Debe agregar producto cuando franquicia y sucursal existen")
+                void shouldAddProductSuccessfully() {
+                        Franchise franchise = sampleFranchise();
+                        Product newProd = buildProduct("prod-3", "Alitas BBQ", 50);
+                        List<Product> updatedProducts = new ArrayList<>(
+                                        franchise.getBranches().get(0).getProducts());
+                        updatedProducts.add(newProd);
+                        Branch updatedBranch = buildBranch("branch-1", "Sucursal Norte", updatedProducts);
+                        Franchise updated = buildFranchise("franc-1", "Frisby",
+                                        List.of(updatedBranch));
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+                        when(franchiseRepository.addProduct("franc-1", "branch-1", "Alitas BBQ", 50))
+                                        .thenReturn(Mono.just(updated));
+
+                        StepVerifier.create(franchiseUseCase.addProduct(
+                                        "franc-1", "branch-1", "Alitas BBQ", 50))
+                                        .expectNextMatches(f -> f.getBranches().get(0)
+                                                        .getProducts().size() == 3)
+                                        .verifyComplete();
+                }
+
+        @Test
+        @DisplayName("Debe lanzar FranchiseNotFoundException cuando franquicia no existe")
+        void shouldThrowWhenFranchiseNotFound() {
+            when(franchiseRepository.findById("no-existe")).thenReturn(Mono.empty());
+
+            StepVerifier.create(franchiseUseCase.addProduct(
+                            "no-existe", "branch-1", "Producto", 10))
+                    .expectError(FranchiseNotFoundException.class)
+                    .verify();
+        }
+
+                @Test
+                @DisplayName("Debe lanzar BranchNotFoundException cuando sucursal no existe")
+                void shouldThrowWhenBranchNotFound() {
+                        Franchise franchise = sampleFranchise();
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+
+                        // La sucursal "branch-inexistente" no está entre las sucursales de la
+                        // franquicia
+                        StepVerifier.create(franchiseUseCase.addProduct(
+                                        "franc-1", "branch-inexistente", "Producto", 10))
+                                        .expectError(BranchNotFoundException.class)
+                                        .verify();
+
+                        verify(franchiseRepository, never())
+                                        .addProduct(anyString(), anyString(), anyString(), anyInt());
+                }
+        }
 }
