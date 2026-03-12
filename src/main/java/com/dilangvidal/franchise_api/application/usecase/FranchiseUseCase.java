@@ -14,4 +14,6 @@ public interface FranchiseUseCase {
     Mono<Franchise> updateFranchiseName(String franchiseId, String newName);
     Mono<Franchise> addBranch(String franchiseId, String branchName);
     Mono<Franchise> updateBranchName(String franchiseId, String branchId, String newName);
+    Mono<Franchise> addProduct(String franchiseId, String branchId,
+                               String productName, Integer stock);
 }

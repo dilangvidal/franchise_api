@@ -75,4 +75,21 @@ public class FranchiseUseCaseImpl implements FranchiseUseCase {
                 .flatMap(franchise -> franchiseRepository.updateBranchName(
                         franchiseId, branchId, newName));
     }
+    @Override
+    public Mono<Franchise> addProduct(String franchiseId, String branchId,
+                                      String productName, Integer stock) {
+        log.info("Agregando producto '{}' a sucursal: {} en franquicia: {}",
+                productName, branchId, franchiseId);
+        return franchiseRepository.findById(franchiseId)
+                .switchIfEmpty(Mono.error(new FranchiseNotFoundException(franchiseId)))
+                .flatMap(franchise -> {
+                    boolean branchExists = franchise.getBranches().stream()
+                            .anyMatch(b -> b.getId().equals(branchId));
+                    if (!branchExists) {
+                        return Mono.error(new com.dilangvidal.franchise_api
+                                .domain.exception.BranchNotFoundException(branchId));
+                    }
+                    return franchiseRepository.addProduct(franchiseId, branchId, productName, stock);
+                });
+    }
 }

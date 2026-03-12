@@ -94,4 +94,19 @@ public class FranchiseController {
                 return franchiseUseCase.updateBranchName(franchiseId, branchId, request.name())
                                 .map(webMapper::toResponse);
         }
+        @Operation(summary = "Agregar un producto a una sucursal")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "201", description = "Producto agregado exitosamente"),
+                        @ApiResponse(responseCode = "404", description = "Franquicia o sucursal no encontrada", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+        })
+        @PostMapping("/{franchiseId}/branches/{branchId}/products")
+        @ResponseStatus(HttpStatus.CREATED)
+        public Mono<FranchiseResponse> addProduct(
+                        @Parameter(description = "ID de la franquicia") @PathVariable String franchiseId,
+                        @Parameter(description = "ID de la sucursal") @PathVariable String branchId,
+                        @Valid @RequestBody ProductRequest request) {
+                return franchiseUseCase.addProduct(
+                                franchiseId, branchId, request.name(), request.stock())
+                                .map(webMapper::toResponse);
+        }
 }
