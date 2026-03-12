@@ -351,4 +351,49 @@ class FranchiseControllerTest {
             verify(franchiseUseCase, never()).addBranch(any(), any());
         }
     }
+
+    // PATCH /{franchiseId}/branches/{branchId}/name
+    @Nested
+    @DisplayName("PATCH /{franchiseId}/branches/{branchId}/name")
+    class UpdateBranchName {
+
+        @Test
+        @DisplayName("Debe actualizar nombre de sucursal con 200")
+        void shouldReturn200WhenUpdated() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            Franchise updated = sampleFranchise();
+
+            when(franchiseUseCase.updateBranchName("franc-1", "branch-1", "Sucursal Sur"))
+                    .thenReturn(Mono.just(updated));
+
+            webTestClient.patch()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/name")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new BranchRequest("Sucursal Sur"))
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON);
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).updateBranchName("franc-1", "branch-1", "Sucursal Sur");
+        }
+
+        @Test
+        @DisplayName("Debe rechazar con 400 cuando el body es invalido")
+        void shouldFailWhenInvalidBody() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            webTestClient.patch()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/name")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new BranchRequest("A"))
+                    .exchange()
+                    .expectStatus().isBadRequest();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+        }
+    }
 }

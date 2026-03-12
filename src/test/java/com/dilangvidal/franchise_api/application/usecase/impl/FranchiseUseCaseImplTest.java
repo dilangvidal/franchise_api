@@ -259,4 +259,39 @@ class FranchiseUseCaseImplTest {
                         verify(franchiseRepository, never()).addBranch(anyString(), anyString());
                 }
         }
+        @Nested
+        @DisplayName("updateBranchName")
+        class UpdateBranchName {
+
+                @Test
+                @DisplayName("Debe actualizar nombre de sucursal exitosamente")
+                void shouldUpdateBranchNameSuccessfully() {
+                        Franchise franchise = sampleFranchise();
+                        Branch updatedBranch = buildBranch("branch-1", "Sucursal Sur",
+                                        franchise.getBranches().get(0).getProducts());
+                        Franchise updated = buildFranchise("franc-1", "Frisby",
+                                        List.of(updatedBranch));
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+                        when(franchiseRepository.updateBranchName("franc-1", "branch-1", "Sucursal Sur"))
+                                        .thenReturn(Mono.just(updated));
+
+                        StepVerifier.create(franchiseUseCase.updateBranchName(
+                                        "franc-1", "branch-1", "Sucursal Sur"))
+                                        .expectNextMatches(f -> f.getBranches().get(0)
+                                                        .getName().equals("Sucursal Sur"))
+                                        .verifyComplete();
+                }
+
+        @Test
+        @DisplayName("Debe lanzar FranchiseNotFoundException cuando franquicia no existe")
+        void shouldThrowWhenFranchiseNotFound() {
+            when(franchiseRepository.findById("no-existe")).thenReturn(Mono.empty());
+
+            StepVerifier.create(franchiseUseCase.updateBranchName(
+                            "no-existe", "branch-1", "Nuevo Nombre"))
+                    .expectError(FranchiseNotFoundException.class)
+                    .verify();
+        }
+        }
 }
