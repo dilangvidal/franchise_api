@@ -154,4 +154,55 @@ class FranchiseUseCaseImplTest {
                     .verifyComplete();
         }
         }
+        @Nested
+        @DisplayName("updateFranchiseName")
+        class UpdateFranchiseName {
+
+                @Test
+                @DisplayName("Debe actualizar nombre de franquicia exitosamente")
+                void shouldUpdateNameSuccessfully() {
+                        Franchise franchise = sampleFranchise();
+                        Franchise updated = buildFranchise("franc-1", "Frisby Premium",
+                                        franchise.getBranches());
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+                        when(franchiseRepository.existsByName("Frisby Premium"))
+                                        .thenReturn(Mono.just(false));
+                        when(franchiseRepository.updateFranchiseName("franc-1", "Frisby Premium"))
+                                        .thenReturn(Mono.just(updated));
+
+                        StepVerifier.create(franchiseUseCase.updateFranchiseName(
+                                        "franc-1", "Frisby Premium"))
+                                        .expectNextMatches(f -> f.getName().equals("Frisby Premium"))
+                                        .verifyComplete();
+                }
+
+                @Test
+                @DisplayName("Debe lanzar DuplicateNameException cuando el nombre ya existe")
+                void shouldThrowWhenNameDuplicate() {
+                        Franchise franchise = sampleFranchise();
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+                        when(franchiseRepository.existsByName("KFC")).thenReturn(Mono.just(true));
+
+                        StepVerifier.create(franchiseUseCase.updateFranchiseName("franc-1", "KFC"))
+                                        .expectError(DuplicateNameException.class)
+                                        .verify();
+
+                        // Nunca se llama a updateFranchiseName si el nombre ya está en uso
+                        verify(franchiseRepository, never())
+                                        .updateFranchiseName(anyString(), anyString());
+                }
+
+        @Test
+        @DisplayName("Debe lanzar FranchiseNotFoundException cuando franquicia no existe")
+        void shouldThrowWhenFranchiseNotFound() {
+            when(franchiseRepository.findById("no-existe")).thenReturn(Mono.empty());
+
+            StepVerifier.create(franchiseUseCase.updateFranchiseName(
+                            "no-existe", "Nuevo Nombre"))
+                    .expectError(FranchiseNotFoundException.class)
+                    .verify();
+        }
+        }
 }

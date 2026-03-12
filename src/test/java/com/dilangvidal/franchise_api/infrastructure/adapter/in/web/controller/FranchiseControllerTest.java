@@ -219,4 +219,72 @@ class FranchiseControllerTest {
             verify(franchiseUseCase).getAllFranchises();
         }
     }
+
+    // PATCH /{franchiseId}/name
+    @Nested
+    @DisplayName("PATCH /{franchiseId}/name")
+    class UpdateFranchiseName {
+
+        @Test
+        @DisplayName("Debe actualizar el nombre de la franquicia con 200")
+        void shouldReturn200WhenUpdated() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            Franchise updated = Franchise.builder()
+                    .id("franc-1").name("Frisby Premium").branches(new ArrayList<>()).build();
+
+            when(franchiseUseCase.updateFranchiseName("franc-1", "Frisby Premium"))
+                    .thenReturn(Mono.just(updated));
+
+            webTestClient.patch().uri(BASE_URL + "/franc-1/name")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new FranchiseRequest("Frisby Premium"))
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                    .expectBody()
+                    .jsonPath("$.id").exists()
+                    .jsonPath("$.name").isEqualTo("Frisby Premium");
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).updateFranchiseName("franc-1", "Frisby Premium");
+        }
+
+        @Test
+        @DisplayName("Debe retornar 404 cuando la franquicia no existe")
+        void shouldReturn404WhenNotFound() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            when(franchiseUseCase.updateFranchiseName(eq("no-existe"), anyString()))
+                    .thenReturn(Mono.error(new FranchiseNotFoundException("no-existe")));
+
+            webTestClient.patch().uri(BASE_URL + "/no-existe/name")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new FranchiseRequest("Nuevo Nombre"))
+                    .exchange()
+                    .expectStatus().isNotFound()
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(404);
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+        }
+
+        @Test
+        @DisplayName("Debe fallar con 400 si el payload es invalido")
+        void shouldFailWhenPayloadInvalid() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            webTestClient.patch().uri(BASE_URL + "/franc-1/name")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new FranchiseRequest(""))
+                    .exchange()
+                    .expectStatus().isBadRequest();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase, never()).updateFranchiseName(any(), any());
+        }
+    }
 }
