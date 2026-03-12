@@ -19,4 +19,6 @@ public interface FranchiseUseCase {
     Mono<Franchise> deleteProduct(String franchiseId, String branchId, String productId);
     Mono<Franchise> updateStock(String franchiseId, String branchId,
                                 String productId, Integer newStock);
+    Mono<Franchise> updateProductName(String franchiseId, String branchId,
+                                      String productId, String newName);
 }

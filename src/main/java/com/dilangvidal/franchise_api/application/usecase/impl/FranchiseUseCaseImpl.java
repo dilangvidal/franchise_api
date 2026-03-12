@@ -120,4 +120,13 @@ public class FranchiseUseCaseImpl implements FranchiseUseCase {
                 .flatMap(franchise -> franchiseRepository.updateStock(
                         franchiseId, branchId, productId, newStock));
     }
+    @Override
+    public Mono<Franchise> updateProductName(String franchiseId, String branchId,
+                                             String productId, String newName) {
+        log.info("Actualizando nombre del producto: {} → {}", productId, newName);
+        return franchiseRepository.findById(franchiseId)
+                .switchIfEmpty(Mono.error(new FranchiseNotFoundException(franchiseId)))
+                .flatMap(franchise -> franchiseRepository.updateProductName(
+                        franchiseId, branchId, productId, newName));
+    }
 }
