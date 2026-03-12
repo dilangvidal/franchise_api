@@ -1,9 +1,11 @@
 package com.dilangvidal.franchise_api.infrastructure.adapter.out.persistence.adapter;
 
 
+import com.dilangvidal.franchise_api.domain.exception.FranchiseNotFoundException;
 import com.dilangvidal.franchise_api.domain.model.Branch;
 import com.dilangvidal.franchise_api.domain.model.Franchise;
 import com.dilangvidal.franchise_api.domain.model.Product;
+import com.dilangvidal.franchise_api.domain.model.TopStockProduct;
 import com.dilangvidal.franchise_api.domain.repository.FranchiseRepository;
 import com.dilangvidal.franchise_api.infrastructure.adapter.out.persistence.document.BranchDocument;
 import com.dilangvidal.franchise_api.infrastructure.adapter.out.persistence.document.ProductDocument;
@@ -165,16 +167,17 @@ public class FranchisePersistenceAdapter implements FranchiseRepository {
     }
 
     @Override
-    public Mono<List<Product>> getTopStockProductPerBranch(String franchiseId) {
+    public Mono<List<TopStockProduct>> getTopStockProductPerBranch(String franchiseId) {
         return repository.findById(franchiseId)
-                // Se utiliza flatMap y stream para aplanar la lista de sucursales, y adentro se
-                // busca el producto con mayor (max) stock usando el comparador Comparator.comparingInt.
+                .switchIfEmpty(Mono.error(new FranchiseNotFoundException(franchiseId)))
                 .map(doc -> doc.getBranches().stream()
                         .flatMap(branch -> branch.getProducts().stream()
                                 .max(Comparator.comparingInt(ProductDocument::getStock))
-                                .map(topProduct -> Product.builder()
-                                        .id(topProduct.getId())
-                                        .name(topProduct.getName())
+                                .map(topProduct -> TopStockProduct.builder()
+                                        .branchId(branch.getId())
+                                        .branchName(branch.getName())
+                                        .productId(topProduct.getId())
+                                        .productName(topProduct.getName())
                                         .stock(topProduct.getStock())
                                         .build())
                                 .stream())

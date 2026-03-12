@@ -2,6 +2,7 @@ package com.dilangvidal.franchise_api.domain.repository;
 
 import com.dilangvidal.franchise_api.domain.model.Franchise;
 import com.dilangvidal.franchise_api.domain.model.Product;
+import com.dilangvidal.franchise_api.domain.model.TopStockProduct;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -37,5 +38,5 @@ public interface FranchiseRepository {
 
     Mono<Franchise> updateProductName(String franchiseId, String branchId, String productId, String newName);
 
-    Mono<List<Product>> getTopStockProductPerBranch(String franchiseId);
+    Mono<List<TopStockProduct>> getTopStockProductPerBranch(String franchiseId);
 }
