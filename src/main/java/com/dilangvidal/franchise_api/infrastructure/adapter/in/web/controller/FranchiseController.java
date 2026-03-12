@@ -152,4 +152,17 @@ public class FranchiseController {
                                 franchiseId, branchId, productId, request.name())
                                 .map(webMapper::toResponse);
         }
+        @Operation(summary = "Obtener el producto con mayor stock por sucursal de una franquicia")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "Productos con mayor stock obtenidos"),
+                        @ApiResponse(responseCode = "404", description = "Franquicia no encontrada", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+        })
+        @GetMapping("/{franchiseId}/top-stock-products")
+        public Mono<List<TopStockProductResponse>> getTopStockProductPerBranch(
+                        @Parameter(description = "ID de la franquicia", example = "64b1f2e3c2a4e12d3f456789") @PathVariable String franchiseId) {
+                return franchiseUseCase.getTopStockProductPerBranch(franchiseId)
+                                .map(list -> list.stream()
+                                                .map(webMapper::toResponse)
+                                                .toList());
+        }
 }

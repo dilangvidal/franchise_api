@@ -21,4 +21,5 @@ public interface FranchiseUseCase {
                                 String productId, Integer newStock);
     Mono<Franchise> updateProductName(String franchiseId, String branchId,
                                       String productId, String newName);
+    Mono<List<TopStockProduct>> getTopStockProductPerBranch(String franchiseId);
 }
