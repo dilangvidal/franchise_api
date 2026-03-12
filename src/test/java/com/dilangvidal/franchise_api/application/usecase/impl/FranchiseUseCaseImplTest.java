@@ -437,4 +437,41 @@ class FranchiseUseCaseImplTest {
                     .verify();
         }
         }
+        @Nested
+        @DisplayName("updateProductName")
+        class UpdateProductName {
+
+                @Test
+                @DisplayName("Debe actualizar nombre de producto exitosamente")
+                void shouldUpdateProductNameSuccessfully() {
+                        Franchise franchise = sampleFranchise();
+                        Product updatedProd = buildProduct("prod-1", "Pollo Premium", 100);
+                        Branch updatedBranch = buildBranch("branch-1", "Sucursal Norte",
+                                        List.of(updatedProd, buildProduct("prod-2", "Hamburguesa", 250)));
+                        Franchise updated = buildFranchise("franc-1", "Frisby",
+                                        List.of(updatedBranch));
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+                        when(franchiseRepository.updateProductName(
+                                        "franc-1", "branch-1", "prod-1", "Pollo Premium"))
+                                        .thenReturn(Mono.just(updated));
+
+                        StepVerifier.create(franchiseUseCase.updateProductName(
+                                        "franc-1", "branch-1", "prod-1", "Pollo Premium"))
+                                        .expectNextMatches(f -> f.getBranches().get(0)
+                                                        .getProducts().get(0).getName().equals("Pollo Premium"))
+                                        .verifyComplete();
+                }
+
+        @Test
+        @DisplayName("Debe lanzar FranchiseNotFoundException cuando franquicia no existe")
+        void shouldThrowWhenFranchiseNotFound() {
+            when(franchiseRepository.findById("no-existe")).thenReturn(Mono.empty());
+
+            StepVerifier.create(franchiseUseCase.updateProductName(
+                            "no-existe", "branch-1", "prod-1", "Nuevo"))
+                    .expectError(FranchiseNotFoundException.class)
+                    .verify();
+        }
+        }
 }

@@ -587,4 +587,50 @@ class FranchiseControllerTest {
             assertTrue(duration < 500, "La respuesta tardo demasiado");
         }
     }
+
+    // PATCH /{franchiseId}/branches/{branchId}/products/{productId}/name
+    @Nested
+    @DisplayName("PATCH /{franchiseId}/branches/{branchId}/products/{productId}/name")
+    class UpdateProductName {
+
+        @Test
+        @DisplayName("Debe actualizar nombre de producto con 200")
+        void shouldUpdateProductName() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            Franchise updated = sampleFranchise();
+
+            when(franchiseUseCase.updateProductName(
+                    "franc-1", "branch-1", "prod-1", "Pollo Premium"))
+                    .thenReturn(Mono.just(updated));
+
+            webTestClient.patch()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products/prod-1/name")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new ProductRequest("Pollo Premium", 100))
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON);
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).updateProductName("franc-1", "branch-1", "prod-1", "Pollo Premium");
+        }
+
+        @Test
+        @DisplayName("Debe rechazar con 400 cuando el nombre del producto esta vacio")
+        void shouldFailWhenNameBlank() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            webTestClient.patch()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products/prod-1/name")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new ProductRequest("", 100))
+                    .exchange()
+                    .expectStatus().isBadRequest();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+        }
+    }
 }
