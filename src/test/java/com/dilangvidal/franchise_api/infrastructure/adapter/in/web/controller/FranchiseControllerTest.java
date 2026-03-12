@@ -287,4 +287,68 @@ class FranchiseControllerTest {
             verify(franchiseUseCase, never()).updateFranchiseName(any(), any());
         }
     }
+
+    // POST /{franchiseId}/branches
+    @Nested
+    @DisplayName("POST /{franchiseId}/branches")
+    class AddBranch {
+
+        @Test
+        @DisplayName("Debe agregar sucursal exitosamente con 201")
+        void shouldCreateBranch() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            Franchise updated = sampleFranchise();
+
+            when(franchiseUseCase.addBranch("franc-1", "Sucursal Norte"))
+                    .thenReturn(Mono.just(updated));
+
+            webTestClient.post().uri(BASE_URL + "/franc-1/branches")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new BranchRequest("Sucursal Norte"))
+                    .exchange()
+                    .expectStatus().isCreated()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                    .expectBody()
+                    .jsonPath("$.branches[0].name").isEqualTo("Sucursal Norte");
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).addBranch("franc-1", "Sucursal Norte");
+        }
+
+        @Test
+        @DisplayName("Debe retornar 404 cuando la franquicia no existe")
+        void shouldReturn404WhenFranchiseNotFound() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            when(franchiseUseCase.addBranch(eq("no-existe"), anyString()))
+                    .thenReturn(Mono.error(new FranchiseNotFoundException("no-existe")));
+
+            webTestClient.post().uri(BASE_URL + "/no-existe/branches")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new BranchRequest("Sucursal"))
+                    .exchange()
+                    .expectStatus().isNotFound();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+        }
+
+        @Test
+        @DisplayName("Debe rechazar con 400 cuando el nombre esta en blanco")
+        void shouldFailWhenNameIsEmpty() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            webTestClient.post().uri(BASE_URL + "/franc-1/branches")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new BranchRequest(""))
+                    .exchange()
+                    .expectStatus().isBadRequest();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase, never()).addBranch(any(), any());
+        }
+    }
 }

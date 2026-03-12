@@ -205,4 +205,58 @@ class FranchiseUseCaseImplTest {
                     .verify();
         }
         }
+        @Nested
+        @DisplayName("addBranch")
+        class AddBranch {
+
+                @Test
+                @DisplayName("Debe agregar sucursal cuando franquicia existe y nombre no está duplicado")
+                void shouldAddBranchSuccessfully() {
+                        Franchise franchise = buildFranchise("franc-1", "Frisby", new ArrayList<>());
+                        Franchise updated = buildFranchise("franc-1", "Frisby",
+                                        List.of(buildBranch("branch-1", "Sucursal Norte", new ArrayList<>())));
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+                        when(franchiseRepository.addBranch("franc-1", "Sucursal Norte"))
+                                        .thenReturn(Mono.just(updated));
+
+                        StepVerifier.create(franchiseUseCase.addBranch("franc-1", "Sucursal Norte"))
+                                        .expectNextMatches(f -> f.getBranches().size() == 1
+                                                        && f.getBranches().get(0).getName().equals("Sucursal Norte"))
+                                        .verifyComplete();
+
+                        verify(franchiseRepository).addBranch("franc-1", "Sucursal Norte");
+                }
+
+        @Test
+        @DisplayName("Debe lanzar FranchiseNotFoundException cuando la franquicia no existe")
+        void shouldThrowWhenFranchiseNotFound() {
+            // switchIfEmpty en el UseCase convierte Mono.empty() en un error
+            when(franchiseRepository.findById("no-existe")).thenReturn(Mono.empty());
+
+            StepVerifier.create(franchiseUseCase.addBranch("no-existe", "Sucursal"))
+                    .expectError(FranchiseNotFoundException.class)
+                    .verify();
+
+            // Nunca se debe intentar agregar la sucursal si la franquicia no existe
+            verify(franchiseRepository, never()).addBranch(anyString(), anyString());
+        }
+
+                @Test
+                @DisplayName("Debe lanzar DuplicateNameException cuando la sucursal ya existe (case-insensitive)")
+                void shouldThrowWhenBranchNameDuplicate() {
+                        Branch existing = buildBranch("branch-1", "Sucursal Norte", new ArrayList<>());
+                        Franchise franchise = buildFranchise("franc-1", "Frisby",
+                                        new ArrayList<>(List.of(existing)));
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+
+                        // "sucursal norte" (minúscula) debe chocar con "Sucursal Norte" existente
+                        StepVerifier.create(franchiseUseCase.addBranch("franc-1", "sucursal norte"))
+                                        .expectError(DuplicateNameException.class)
+                                        .verify();
+
+                        verify(franchiseRepository, never()).addBranch(anyString(), anyString());
+                }
+        }
 }
