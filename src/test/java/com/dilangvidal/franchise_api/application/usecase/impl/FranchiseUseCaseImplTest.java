@@ -85,4 +85,44 @@ class FranchiseUseCaseImplTest {
                 return buildFranchise("franc-1", "Frisby", new ArrayList<>(List.of(b1)));
         }
 
+        @Nested
+        @DisplayName("createFranchise")
+        class CreateFranchise {
+
+                @Test
+                @DisplayName("Debe crear franquicia cuando el nombre no existe")
+                void shouldCreateFranchiseWhenNameDoesNotExist() {
+                        // Datos de prueba: la franquicia que el repositorio "devolvería" al guardar
+                        Franchise saved = buildFranchise("franc-1", "Frisby", new ArrayList<>());
+
+                        // Configurar mocks: el nombre NO existe -> se procede a guardar
+                        when(franchiseRepository.existsByName("Frisby")).thenReturn(Mono.just(false));
+                        when(franchiseRepository.save(any(Franchise.class))).thenReturn(Mono.just(saved));
+
+                        // Ejecutar y verificar: debe emitir la franquicia creada y completar
+                        StepVerifier.create(franchiseUseCase.createFranchise("Frisby"))
+                                        .expectNextMatches(f -> f.getId().equals("franc-1")
+                                                        && f.getName().equals("Frisby"))
+                                        .verifyComplete();
+
+                        // Verificar que se llamaron los métodos esperados del repositorio
+                        verify(franchiseRepository).existsByName("Frisby");
+                        verify(franchiseRepository).save(any(Franchise.class));
+                }
+
+        @Test
+        @DisplayName("Debe lanzar DuplicateNameException cuando el nombre ya existe")
+        void shouldThrowDuplicateWhenNameExists() {
+            // Configurar mock: el nombre YA existe
+            when(franchiseRepository.existsByName("Frisby")).thenReturn(Mono.just(true));
+
+            // Ejecutar y verificar: debe emitir un error DuplicateNameException
+            StepVerifier.create(franchiseUseCase.createFranchise("Frisby"))
+                    .expectError(DuplicateNameException.class)
+                    .verify();
+
+            // Verificar que NUNCA se intentó guardar (porque el nombre ya existía)
+            verify(franchiseRepository, never()).save(any());
+        }
+        }
 }

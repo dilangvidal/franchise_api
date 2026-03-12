@@ -81,4 +81,92 @@ class FranchiseControllerTest {
         return Franchise.builder().id("franc-1").name("Frisby")
                 .branches(new ArrayList<>(List.of(b1))).build();
     }
+
+    // POST /api/v1/franchises
+    @Nested
+    @DisplayName("POST /api/v1/franchises")
+    class CreateFranchise {
+
+        @Test
+        @DisplayName("Debe crear franquicia con nombre valido y retornar 201")
+        void shouldReturn201WhenCreated() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            Franchise franchise = Franchise.builder()
+                    .id("franc-1").name("Frisby").branches(new ArrayList<>()).build();
+
+            when(franchiseUseCase.createFranchise("Frisby")).thenReturn(Mono.just(franchise));
+
+            webTestClient.post().uri(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new FranchiseRequest("Frisby"))
+                    .exchange()
+                    .expectStatus().isCreated()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                    .expectBody()
+                    .jsonPath("$.id").exists()
+                    .jsonPath("$.id").isEqualTo("franc-1")
+                    .jsonPath("$.name").exists()
+                    .jsonPath("$.name").isEqualTo("Frisby")
+                    .jsonPath("$.branches").exists()
+                    .jsonPath("$.branches").isArray();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).createFranchise("Frisby");
+        }
+
+        @Test
+        @DisplayName("Debe retornar 409 cuando el nombre ya existe")
+        void shouldReturn409WhenDuplicateName() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            when(franchiseUseCase.createFranchise("Frisby"))
+                    .thenReturn(Mono.error(new DuplicateNameException("Franchise", "Frisby")));
+
+            webTestClient.post().uri(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new FranchiseRequest("Frisby"))
+                    .exchange()
+                    .expectStatus().isEqualTo(409)
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(409);
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).createFranchise("Frisby");
+        }
+
+        @Test
+        @DisplayName("Debe rechazar con 400 cuando el nombre esta en blanco")
+        void shouldFailWhenNameIsEmpty() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            webTestClient.post().uri(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new FranchiseRequest(""))
+                    .exchange()
+                    .expectStatus().isBadRequest();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase, never()).createFranchise(any());
+        }
+
+        @Test
+        @DisplayName("Debe rechazar con 400 cuando el nombre es muy corto")
+        void shouldFailWhenPayloadInvalid() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            webTestClient.post().uri(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new FranchiseRequest("A"))
+                    .exchange()
+                    .expectStatus().isBadRequest();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase, never()).createFranchise(any());
+        }
+    }
 }
