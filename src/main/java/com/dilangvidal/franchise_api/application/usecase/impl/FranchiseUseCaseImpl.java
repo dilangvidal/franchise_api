@@ -40,4 +40,17 @@ public class FranchiseUseCaseImpl implements FranchiseUseCase {
         log.info("Obtener todas las franquicias");
         return franchiseRepository.findAll();
     }
+    @Override
+    public Mono<Franchise> updateFranchiseName(String franchiseId, String newName) {
+        log.info("Actualizando nombre de la franquicia: {} → {}", franchiseId, newName);
+        return franchiseRepository.findById(franchiseId)
+                .switchIfEmpty(Mono.error(new FranchiseNotFoundException(franchiseId)))
+                .flatMap(franchise -> franchiseRepository.existsByName(newName))
+                .flatMap(exists -> {
+                    if (Boolean.TRUE.equals(exists)) {
+                        return Mono.error(new DuplicateNameException("Franchise", newName));
+                    }
+                    return franchiseRepository.updateFranchiseName(franchiseId, newName);
+                });
+    }
 }

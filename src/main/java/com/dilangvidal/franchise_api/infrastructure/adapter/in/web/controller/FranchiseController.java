@@ -54,4 +54,17 @@ public class FranchiseController {
                 return franchiseUseCase.getAllFranchises()
                                 .map(webMapper::toResponse);
         }
+        @Operation(summary = "Actualizar el nombre de una franquicia")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "Nombre de la franquicia actualizado"),
+                        @ApiResponse(responseCode = "404", description = "Franquicia no encontrada", content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
+                        @ApiResponse(responseCode = "409", description = "El nombre ya está en uso", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+        })
+        @PatchMapping("/{franchiseId}/name")
+        public Mono<FranchiseResponse> updateFranchiseName(
+                        @Parameter(description = "ID de la franquicia", example = "64b1f2e3c2a4e12d3f456789") @PathVariable String franchiseId,
+                        @Valid @RequestBody FranchiseRequest request) {
+                return franchiseUseCase.updateFranchiseName(franchiseId, request.name())
+                                .map(webMapper::toResponse);
+        }
 }
