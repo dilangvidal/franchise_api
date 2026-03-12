@@ -125,4 +125,33 @@ class FranchiseUseCaseImplTest {
             verify(franchiseRepository, never()).save(any());
         }
         }
+        @Nested
+        @DisplayName("getAllFranchises")
+        class GetAllFranchises {
+
+                @Test
+                @DisplayName("Debe retornar todas las franquicias")
+                void shouldReturnAllFranchises() {
+                        Franchise f1 = buildFranchise("franc-1", "Frisby", new ArrayList<>());
+                        Franchise f2 = buildFranchise("franc-2", "KFC", new ArrayList<>());
+
+                        when(franchiseRepository.findAll()).thenReturn(Flux.just(f1, f2));
+
+                        // StepVerifier verifica cada elemento emitido por el Flux en orden
+                        StepVerifier.create(franchiseUseCase.getAllFranchises())
+                                        .expectNextMatches(f -> f.getName().equals("Frisby"))
+                                        .expectNextMatches(f -> f.getName().equals("KFC"))
+                                        .verifyComplete();
+                }
+
+        @Test
+        @DisplayName("Debe retornar flujo vacío cuando no hay franquicias")
+        void shouldReturnEmptyWhenNoFranchises() {
+            when(franchiseRepository.findAll()).thenReturn(Flux.empty());
+
+            // verifyComplete() confirma que el flujo terminó sin emitir elementos
+            StepVerifier.create(franchiseUseCase.getAllFranchises())
+                    .verifyComplete();
+        }
+        }
 }

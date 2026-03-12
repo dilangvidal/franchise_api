@@ -169,4 +169,54 @@ class FranchiseControllerTest {
             verify(franchiseUseCase, never()).createFranchise(any());
         }
     }
+
+    // GET /api/v1/franchises
+    @Nested
+    @DisplayName("GET /api/v1/franchises")
+    class GetAllFranchises {
+
+        @Test
+        @DisplayName("Debe retornar lista de franquicias con 200")
+        void shouldReturnFranchises() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            Franchise f1 = Franchise.builder().id("franc-1").name("Frisby").branches(new ArrayList<>()).build();
+            Franchise f2 = Franchise.builder().id("franc-2").name("KFC").branches(new ArrayList<>()).build();
+
+            when(franchiseUseCase.getAllFranchises()).thenReturn(Flux.just(f1, f2));
+
+            webTestClient.get().uri(BASE_URL)
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                    .expectBody()
+                    .jsonPath("$.length()").isEqualTo(2)
+                    .jsonPath("$[0].name").isEqualTo("Frisby")
+                    .jsonPath("$[1].name").isEqualTo("KFC");
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).getAllFranchises();
+        }
+
+        @Test
+        @DisplayName("Debe retornar lista vacia cuando no hay franquicias")
+        void shouldReturnEmptyList() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            when(franchiseUseCase.getAllFranchises()).thenReturn(Flux.empty());
+
+            webTestClient.get().uri(BASE_URL)
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                    .expectBody()
+                    .jsonPath("$.length()").isEqualTo(0)
+                    .jsonPath("$").isArray();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).getAllFranchises();
+        }
+    }
 }
