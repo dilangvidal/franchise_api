@@ -522,4 +522,69 @@ class FranchiseControllerTest {
             assertTrue(duration < 500, "La respuesta tardo demasiado");
         }
     }
+
+    // PATCH /{franchiseId}/branches/{branchId}/products/{productId}/stock
+    @Nested
+    @DisplayName("PATCH /{franchiseId}/branches/{branchId}/products/{productId}/stock")
+    class UpdateStock {
+
+        @Test
+        @DisplayName("Debe actualizar stock exitosamente con 200")
+        void shouldUpdateStock() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            Franchise updated = sampleFranchise();
+
+            when(franchiseUseCase.updateStock("franc-1", "branch-1", "prod-1", 999))
+                    .thenReturn(Mono.just(updated));
+
+            webTestClient.patch()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products/prod-1/stock")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new StockUpdateRequest(999))
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON);
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).updateStock("franc-1", "branch-1", "prod-1", 999);
+        }
+
+        @Test
+        @DisplayName("Debe rechazar con 400 cuando el stock es nulo")
+        void shouldReturn400WhenStockNull() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            webTestClient.patch()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products/prod-1/stock")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{}")
+                    .exchange()
+                    .expectStatus().isBadRequest();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase, never()).updateStock(any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Debe retornar 404 cuando el producto no existe")
+        void shouldReturn404WhenProductNotFound() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            when(franchiseUseCase.updateStock("franc-1", "branch-1", "prod-2", 999))
+                    .thenReturn(Mono.error(new ProductNotFoundException("prod-2")));
+
+            webTestClient.patch()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products/prod-2/stock")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(new StockUpdateRequest(999))
+                    .exchange()
+                    .expectStatus().isNotFound();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+        }
+    }
 }

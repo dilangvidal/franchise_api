@@ -401,4 +401,40 @@ class FranchiseUseCaseImplTest {
                                         .deleteProduct(anyString(), anyString(), anyString());
                 }
         }
+        @Nested
+        @DisplayName("updateStock")
+        class UpdateStock {
+
+                @Test
+                @DisplayName("Debe actualizar stock exitosamente")
+                void shouldUpdateStockSuccessfully() {
+                        Franchise franchise = sampleFranchise();
+                        Product updatedProd = buildProduct("prod-1", "Pollo Frisby", 999);
+                        Branch updatedBranch = buildBranch("branch-1", "Sucursal Norte",
+                                        List.of(updatedProd, buildProduct("prod-2", "Hamburguesa", 250)));
+                        Franchise updated = buildFranchise("franc-1", "Frisby",
+                                        List.of(updatedBranch));
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+                        when(franchiseRepository.updateStock("franc-1", "branch-1", "prod-1", 999))
+                                        .thenReturn(Mono.just(updated));
+
+                        StepVerifier.create(franchiseUseCase.updateStock(
+                                        "franc-1", "branch-1", "prod-1", 999))
+                                        .expectNextMatches(f -> f.getBranches().get(0)
+                                                        .getProducts().get(0).getStock() == 999)
+                                        .verifyComplete();
+                }
+
+        @Test
+        @DisplayName("Debe lanzar FranchiseNotFoundException cuando franquicia no existe")
+        void shouldThrowWhenFranchiseNotFound() {
+            when(franchiseRepository.findById("no-existe")).thenReturn(Mono.empty());
+
+            StepVerifier.create(franchiseUseCase.updateStock(
+                            "no-existe", "branch-1", "prod-1", 50))
+                    .expectError(FranchiseNotFoundException.class)
+                    .verify();
+        }
+        }
 }
