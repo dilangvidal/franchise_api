@@ -109,4 +109,17 @@ public class FranchiseController {
                                 franchiseId, branchId, request.name(), request.stock())
                                 .map(webMapper::toResponse);
         }
+        @Operation(summary = "Eliminar un producto de una sucursal")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "Producto eliminado exitosamente"),
+                        @ApiResponse(responseCode = "404", description = "Franquicia, sucursal o producto no encontrado", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+        })
+        @DeleteMapping("/{franchiseId}/branches/{branchId}/products/{productId}")
+        public Mono<FranchiseResponse> deleteProduct(
+                        @Parameter(description = "ID de la franquicia") @PathVariable String franchiseId,
+                        @Parameter(description = "ID de la sucursal") @PathVariable String branchId,
+                        @Parameter(description = "ID del producto") @PathVariable String productId) {
+                return franchiseUseCase.deleteProduct(franchiseId, branchId, productId)
+                                .map(webMapper::toResponse);
+        }
 }

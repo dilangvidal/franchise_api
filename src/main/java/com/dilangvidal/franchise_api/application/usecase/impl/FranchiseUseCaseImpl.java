@@ -92,4 +92,22 @@ public class FranchiseUseCaseImpl implements FranchiseUseCase {
                     return franchiseRepository.addProduct(franchiseId, branchId, productName, stock);
                 });
     }
+    @Override
+    public Mono<Franchise> deleteProduct(String franchiseId, String branchId, String productId) {
+        log.info("Eliminando producto: {} de sucursal: {} en franquicia: {}",
+                productId, branchId, franchiseId);
+        return franchiseRepository.findById(franchiseId)
+                .switchIfEmpty(Mono.error(new FranchiseNotFoundException(franchiseId)))
+                .flatMap(franchise -> {
+                    boolean productExists = franchise.getBranches().stream()
+                            .filter(b -> b.getId().equals(branchId))
+                            .flatMap(b -> b.getProducts().stream())
+                            .anyMatch(p -> p.getId().equals(productId));
+                    if (!productExists) {
+                        return Mono.error(new com.dilangvidal.franchise_api
+                                .domain.exception.ProductNotFoundException(productId));
+                    }
+                    return franchiseRepository.deleteProduct(franchiseId, branchId, productId);
+                });
+    }
 }
