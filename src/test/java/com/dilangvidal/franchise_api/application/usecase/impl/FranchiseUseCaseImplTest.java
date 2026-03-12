@@ -474,4 +474,43 @@ class FranchiseUseCaseImplTest {
                     .verify();
         }
         }
+        @Nested
+        @DisplayName("getTopStockProductPerBranch")
+        class GetTopStockProduct {
+
+                @Test
+                @DisplayName("Debe retornar el producto con más stock por sucursal")
+                void shouldReturnTopStockProducts() {
+                        Franchise franchise = sampleFranchise();
+                        // El producto con más stock en "Sucursal Norte" es "Hamburguesa" (stock=250)
+                        List<TopStockProduct> topProducts = List.of(
+                                        TopStockProduct.builder()
+                                                        .branchId("branch-1")
+                                                        .branchName("Sucursal Norte")
+                                                        .productId("prod-2")
+                                                        .productName("Hamburguesa")
+                                                        .stock(250)
+                                                        .build());
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+                        when(franchiseRepository.getTopStockProductPerBranch("franc-1"))
+                                        .thenReturn(Mono.just(topProducts));
+
+                        StepVerifier.create(franchiseUseCase.getTopStockProductPerBranch("franc-1"))
+                                        .expectNextMatches(list -> list.size() == 1
+                                                        && list.get(0).getProductName().equals("Hamburguesa")
+                                                        && list.get(0).getStock() == 250)
+                                        .verifyComplete();
+                }
+
+        @Test
+        @DisplayName("Debe lanzar FranchiseNotFoundException cuando franquicia no existe")
+        void shouldThrowWhenFranchiseNotFound() {
+            when(franchiseRepository.findById("no-existe")).thenReturn(Mono.empty());
+
+            StepVerifier.create(franchiseUseCase.getTopStockProductPerBranch("no-existe"))
+                    .expectError(FranchiseNotFoundException.class)
+                    .verify();
+        }
+        }
 }

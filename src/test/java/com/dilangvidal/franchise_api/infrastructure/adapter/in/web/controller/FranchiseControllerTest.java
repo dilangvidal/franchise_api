@@ -633,4 +633,60 @@ class FranchiseControllerTest {
             assertTrue(duration < 500, "La respuesta tardo demasiado");
         }
     }
+
+    // GET /{franchiseId}/top-stock-products
+    @Nested
+    @DisplayName("GET /{franchiseId}/top-stock-products")
+    class GetTopStockProducts {
+
+        @Test
+        @DisplayName("Debe retornar productos con mas stock por sucursal con 200")
+        void shouldReturnTopStockProducts() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            List<TopStockProduct> topProducts = List.of(
+                    TopStockProduct.builder()
+                            .branchId("branch-1")
+                            .branchName("Sucursal Norte")
+                            .productId("prod-2")
+                            .productName("Hamburguesa")
+                            .stock(250)
+                            .build());
+
+            when(franchiseUseCase.getTopStockProductPerBranch("franc-1"))
+                    .thenReturn(Mono.just(topProducts));
+
+            webTestClient.get()
+                    .uri(BASE_URL + "/franc-1/top-stock-products")
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                    .expectBody()
+                    .jsonPath("$.length()").isEqualTo(1)
+                    .jsonPath("$[0].branchName").isEqualTo("Sucursal Norte")
+                    .jsonPath("$[0].productName").isEqualTo("Hamburguesa")
+                    .jsonPath("$[0].stock").isEqualTo(250);
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).getTopStockProductPerBranch("franc-1");
+        }
+
+        @Test
+        @DisplayName("Debe retornar 404 cuando la franquicia no existe")
+        void shouldReturn404WhenFranchiseNotFound() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            when(franchiseUseCase.getTopStockProductPerBranch("no-existe"))
+                    .thenReturn(Mono.error(new FranchiseNotFoundException("no-existe")));
+
+            webTestClient.get()
+                    .uri(BASE_URL + "/no-existe/top-stock-products")
+                    .exchange()
+                    .expectStatus().isNotFound();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+        }
+    }
 }
