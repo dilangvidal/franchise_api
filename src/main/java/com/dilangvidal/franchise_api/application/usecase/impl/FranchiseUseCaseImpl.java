@@ -21,4 +21,18 @@ public class FranchiseUseCaseImpl implements FranchiseUseCase {
 
     private final FranchiseRepository franchiseRepository;
 
+    @Override
+    public Mono<Franchise> createFranchise(String name) {
+        log.info("Creando franquicia con nombre: {}", name);
+        return franchiseRepository.existsByName(name)
+                .flatMap(exists -> {
+                    if (Boolean.TRUE.equals(exists)) {
+                        return Mono.error(new DuplicateNameException("Franchise", name));
+                    }
+                    Franchise franchise = Franchise.builder()
+                            .name(name)
+                            .build();
+                    return franchiseRepository.save(franchise);
+                });
+    }
 }

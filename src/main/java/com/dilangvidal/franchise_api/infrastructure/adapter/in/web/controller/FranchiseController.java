@@ -34,4 +34,17 @@ public class FranchiseController {
         private final FranchiseUseCase franchiseUseCase;
         private final FranchiseWebMapper webMapper;
 
+        @Operation(summary = "Crear una nueva franquicia")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "201", description = "Franquicia creada exitosamente", content = @Content(schema = @Schema(implementation = FranchiseResponse.class))),
+                        @ApiResponse(responseCode = "409", description = "El nombre de la franquicia ya existe", content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
+                        @ApiResponse(responseCode = "400", description = "Cuerpo de solicitud inválido", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+        })
+        @PostMapping
+        @ResponseStatus(HttpStatus.CREATED)
+        public Mono<FranchiseResponse> createFranchise(
+                        @Valid @RequestBody FranchiseRequest request) {
+                return franchiseUseCase.createFranchise(request.name())
+                                .map(webMapper::toResponse);
+        }
 }

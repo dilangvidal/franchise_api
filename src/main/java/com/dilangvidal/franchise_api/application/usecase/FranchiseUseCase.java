@@ -9,4 +9,5 @@ import java.util.List;
 
 public interface FranchiseUseCase {
 
+    Mono<Franchise> createFranchise(String name);
 }
