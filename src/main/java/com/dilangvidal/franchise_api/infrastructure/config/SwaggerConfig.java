@@ -1,4 +1,4 @@
-package com.dilangvidal.franchise_api.infrasctructure.config;
+package com.dilangvidal.franchise_api.infrastructure.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
