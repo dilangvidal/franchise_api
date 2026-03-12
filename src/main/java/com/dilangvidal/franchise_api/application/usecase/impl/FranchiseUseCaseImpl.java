@@ -53,4 +53,18 @@ public class FranchiseUseCaseImpl implements FranchiseUseCase {
                     return franchiseRepository.updateFranchiseName(franchiseId, newName);
                 });
     }
+    @Override
+    public Mono<Franchise> addBranch(String franchiseId, String branchName) {
+        log.info("Agregando sucursal '{}' a franquicia: {}", branchName, franchiseId);
+        return franchiseRepository.findById(franchiseId)
+                .switchIfEmpty(Mono.error(new FranchiseNotFoundException(franchiseId)))
+                .flatMap(franchise -> {
+                    boolean branchExists = franchise.getBranches().stream()
+                            .anyMatch(b -> b.getName().equalsIgnoreCase(branchName));
+                    if (branchExists) {
+                        return Mono.error(new DuplicateNameException("Branch", branchName));
+                    }
+                    return franchiseRepository.addBranch(franchiseId, branchName);
+                });
+    }
 }
