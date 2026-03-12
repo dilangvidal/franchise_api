@@ -122,4 +122,19 @@ public class FranchiseController {
                 return franchiseUseCase.deleteProduct(franchiseId, branchId, productId)
                                 .map(webMapper::toResponse);
         }
+        @Operation(summary = "Actualizar el stock de un producto")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "Stock actualizado exitosamente"),
+                        @ApiResponse(responseCode = "404", description = "Franquicia, sucursal o producto no encontrado", content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+        })
+        @PatchMapping("/{franchiseId}/branches/{branchId}/products/{productId}/stock")
+        public Mono<FranchiseResponse> updateStock(
+                        @Parameter(description = "ID de la franquicia") @PathVariable String franchiseId,
+                        @Parameter(description = "ID de la sucursal") @PathVariable String branchId,
+                        @Parameter(description = "ID del producto") @PathVariable String productId,
+                        @Valid @RequestBody StockUpdateRequest request) {
+                return franchiseUseCase.updateStock(
+                                franchiseId, branchId, productId, request.stock())
+                                .map(webMapper::toResponse);
+        }
 }

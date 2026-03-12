@@ -110,4 +110,14 @@ public class FranchiseUseCaseImpl implements FranchiseUseCase {
                     return franchiseRepository.deleteProduct(franchiseId, branchId, productId);
                 });
     }
+    @Override
+    public Mono<Franchise> updateStock(String franchiseId, String branchId,
+                                       String productId, Integer newStock) {
+        log.info("Actualizando stock de producto: {} a {} en sucursal: {} franquicia: {}",
+                productId, newStock, branchId, franchiseId);
+        return franchiseRepository.findById(franchiseId)
+                .switchIfEmpty(Mono.error(new FranchiseNotFoundException(franchiseId)))
+                .flatMap(franchise -> franchiseRepository.updateStock(
+                        franchiseId, branchId, productId, newStock));
+    }
 }
