@@ -349,4 +349,56 @@ class FranchiseUseCaseImplTest {
                                         .addProduct(anyString(), anyString(), anyString(), anyInt());
                 }
         }
+        @Nested
+        @DisplayName("deleteProduct")
+        class DeleteProduct {
+
+                @Test
+                @DisplayName("Debe eliminar producto existente exitosamente")
+                void shouldDeleteProductSuccessfully() {
+                        Franchise franchise = sampleFranchise();
+                        Product remaining = buildProduct("prod-2", "Hamburguesa", 250);
+                        Branch updatedBranch = buildBranch("branch-1", "Sucursal Norte",
+                                        List.of(remaining));
+                        Franchise updated = buildFranchise("franc-1", "Frisby",
+                                        List.of(updatedBranch));
+
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+                        when(franchiseRepository.deleteProduct("franc-1", "branch-1", "prod-1"))
+                                        .thenReturn(Mono.just(updated));
+
+                        StepVerifier.create(franchiseUseCase.deleteProduct(
+                                        "franc-1", "branch-1", "prod-1"))
+                                        .expectNextMatches(f -> f.getBranches().get(0)
+                                                        .getProducts().size() == 1) // Se eliminó 1 de los 2 productos
+                                        .verifyComplete();
+                }
+
+        @Test
+        @DisplayName("Debe lanzar FranchiseNotFoundException cuando franquicia no existe")
+        void shouldThrowWhenFranchiseNotFound() {
+            when(franchiseRepository.findById("no-existe")).thenReturn(Mono.empty());
+
+            StepVerifier.create(franchiseUseCase.deleteProduct(
+                            "no-existe", "branch-1", "prod-1"))
+                    .expectError(FranchiseNotFoundException.class)
+                    .verify();
+        }
+
+                @Test
+                @DisplayName("Debe lanzar ProductNotFoundException cuando producto no existe")
+                void shouldThrowWhenProductNotFound() {
+                        Franchise franchise = sampleFranchise();
+                        when(franchiseRepository.findById("franc-1")).thenReturn(Mono.just(franchise));
+
+                        StepVerifier.create(franchiseUseCase.deleteProduct(
+                                        "franc-1", "branch-1", "prod-inexistente"))
+                                        .expectError(ProductNotFoundException.class)
+                                        .verify();
+
+                        // No se debe intentar eliminar si el producto no existe
+                        verify(franchiseRepository, never())
+                                        .deleteProduct(anyString(), anyString(), anyString());
+                }
+        }
 }

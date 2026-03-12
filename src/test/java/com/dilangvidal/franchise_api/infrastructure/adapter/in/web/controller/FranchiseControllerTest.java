@@ -478,4 +478,48 @@ class FranchiseControllerTest {
             assertTrue(duration < 500, "La respuesta tardo demasiado");
         }
     }
+
+    // DELETE /{franchiseId}/branches/{branchId}/products/{productId}
+    @Nested
+    @DisplayName("DELETE /{franchiseId}/branches/{branchId}/products/{productId}")
+    class DeleteProduct {
+
+        @Test
+        @DisplayName("Debe eliminar producto exitosamente con 200")
+        void shouldDeleteProduct() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            Franchise updated = sampleFranchise();
+
+            when(franchiseUseCase.deleteProduct("franc-1", "branch-1", "prod-1"))
+                    .thenReturn(Mono.just(updated));
+
+            webTestClient.delete()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products/prod-1")
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectHeader().contentType(MediaType.APPLICATION_JSON);
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+            verify(franchiseUseCase).deleteProduct("franc-1", "branch-1", "prod-1");
+        }
+
+        @Test
+        @DisplayName("Debe retornar 404 cuando el producto no existe")
+        void shouldReturn404WhenProductNotFound() throws InterruptedException {
+            Thread.sleep(110);
+            long start = System.currentTimeMillis();
+            when(franchiseUseCase.deleteProduct("franc-1", "branch-1", "no-existe"))
+                    .thenReturn(Mono.error(new ProductNotFoundException("no-existe")));
+
+            webTestClient.delete()
+                    .uri(BASE_URL + "/franc-1/branches/branch-1/products/no-existe")
+                    .exchange()
+                    .expectStatus().isNotFound();
+
+            long duration = System.currentTimeMillis() - start;
+            assertTrue(duration < 500, "La respuesta tardo demasiado");
+        }
+    }
 }
