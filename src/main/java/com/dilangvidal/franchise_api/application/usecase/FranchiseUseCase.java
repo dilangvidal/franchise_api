@@ -13,4 +13,5 @@ public interface FranchiseUseCase {
     Flux<Franchise> getAllFranchises();
     Mono<Franchise> updateFranchiseName(String franchiseId, String newName);
     Mono<Franchise> addBranch(String franchiseId, String branchName);
+    Mono<Franchise> updateBranchName(String franchiseId, String branchId, String newName);
 }
