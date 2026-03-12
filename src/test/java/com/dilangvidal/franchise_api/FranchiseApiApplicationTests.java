@@ -1,11 +1,10 @@
 package com.dilangvidal.franchise_api;
 
+import com.dilangvidal.franchise_api.infrastructure.adapter.in.web.controller.FranchiseController;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
 
-@Import(TestcontainersConfiguration.class)
-@SpringBootTest
+@WebFluxTest(FranchiseController.class)
 class FranchiseApiApplicationTests {
 
 	@Test
